@@ -1,3 +1,5 @@
+March 24, 2016
+
 Sophie - walls, paint, carpet
 Mariana - living room (TV, couch, chair, lamp, rug?)
 Victor - bedroom (bed, dresser, side table, lamp maybe)
@@ -5,3 +7,5 @@ Dylan - kitchen/dining room (table, chairs, counter, fridge, stove)
 John - bathroom (bathtub, toilet, sink) and collision detection 
 
 Everyone adds to garden if they have time 
+Next meeting Thurs Mar 31 at 11:30
+Everyone should be finished these models by next Thurs, we will add extra features after this if we have time. 
