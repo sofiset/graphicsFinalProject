@@ -1,0 +1,7 @@
+Sophie - walls, paint, carpet
+Mariana - living room (TV, couch, chair, lamp, rug?)
+Victor - bedroom (bed, dresser, side table, lamp maybe)
+Dylan - kitchen/dining room (table, chairs, counter, fridge, stove)
+John - bathroom (bathtub, toilet, sink) and collision detection 
+
+Everyone adds to garden if they have time 
