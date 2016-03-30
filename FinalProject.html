@@ -1,75 +1,657 @@
 
-    <!DOCTYPE html>  
-    <html>
-    <head>
-        <meta charset=utf-8>
-        <title>Final Project</title>    
-        <script src="http://threejs.org/build/three.js"></script> 
-        <script>
-        window.onload = function() { 
+   <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>three.js - pointerlock controls</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
 
-          var camera, scene, renderer;
+    /* Check the animate function for collision detection. Also look at raycaster declaration (SF) */
+    
+      html, body {
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        background-color: #ffffff;
+        margin: 0;
+        overflow: hidden;
+        font-family: arial;
+      }
+      #blocker {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+      }
+      #instructions {
+        width: 100%;
+        height: 100%;
+        display: -webkit-box;
+        display: -moz-box;
+        display: box;
+        -webkit-box-orient: horizontal;
+        -moz-box-orient: horizontal;
+        box-orient: horizontal;
+        -webkit-box-pack: center;
+        -moz-box-pack: center;
+        box-pack: center;
+        -webkit-box-align: center;
+        -moz-box-align: center;
+        box-align: center;
+        color: #ffffff;
+        text-align: center;
+        cursor: pointer;
+      }
 
-          init();
-          animate();
+    </style>
+  </head>
+  <body>
+    <script src="http://threejs.org/build/three.js"></script>
+    <script src="csg.js"></script>
+    <script src="ThreeCSG.js"></script>
+    <script src="ColladaLoader.js"></script>
 
-          function init() {
 
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-            camera.position.z = 400;
+    <div id="blocker">
 
-            scene = new THREE.Scene();
+      <div id="instructions">
+        <span style="font-size:40px">Click to play</span>
+        <br />
+        (W, A, S, D = Move, MOUSE = Look around)
+      </div>
 
-            // Lights
-            scene.add(new THREE.AmbientLight(0xcccccc));
-            pointLight = new THREE.PointLight(0xff4400, 5, 30);
-            pointLight.position.set(5, 0, 0);
-            scene.add(pointLight);
-   
-           renderer = new THREE.WebGLRenderer();
-           renderer.setPixelRatio(window.devicePixelRatio);
-           renderer.setSize(window.innerWidth, window.innerHeight);
-           document.body.appendChild(renderer.domElement);
+    </div>
 
-            window.addEventListener('resize', onWindowResize, false);
+    <script>
 
-            var gl = renderer.getContext();
-    if( !gl.getExtension( "OES_texture_float" ) ){
-        console.error( "No OES_texture_float support for float textures!" );
-    }
+    THREE.PointerLockControls = function ( camera ) {
 
-            var carpet = new THREE.TextureLoader().load('images/BeigeCarpet.jpg');
-            carpet.wrapS = THREE.RepeatWrapping;
-            var material = new THREE.MeshPhongMaterial( {map: carpet});
-            var geometry = new THREE.CubeGeometry(200, 5, 200);
+      var scope = this;
 
-            var mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
+      camera.rotation.set( 0, 0, 0 );
+
+      var pitchObject = new THREE.Object3D();
+      pitchObject.add( camera );
+
+      var yawObject = new THREE.Object3D();
+      yawObject.position.y = 10;
+      yawObject.add( pitchObject );
+
+      var PI_2 = Math.PI / 2;
+
+      var onMouseMove = function ( event ) {
+
+        if ( scope.enabled === false ) return;
+
+        var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+        var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+        yawObject.rotation.y -= movementX * 0.002;
+        pitchObject.rotation.x -= movementY * 0.002;
+
+        pitchObject.rotation.x = Math.max( - PI_2, Math.min( PI_2, pitchObject.rotation.x ) );
+
+      };
+
+      this.dispose = function() {
+
+        document.removeEventListener( 'mousemove', onMouseMove, false );
+
+      };
+
+  document.addEventListener( 'mousemove', onMouseMove, false );
+
+  this.enabled = false;
+
+  this.getObject = function () {
+
+    return yawObject;
+
+  };
+
+  this.getDirection = function() {
+
+    // assumes the camera itself is not rotated
+
+    var direction = new THREE.Vector3( 0, 0, - 1 );
+    var rotation = new THREE.Euler( 0, 0, 0, "YXZ" );
+
+    return function( v ) {
+
+      rotation.set( pitchObject.rotation.x, yawObject.rotation.y, 0 );
+
+      v.copy( direction ).applyEuler( rotation );
+
+      return v;
+
+    };
+
+  }();
+
+};
+      var map = [//0  1  2  3  4  5  6  7  8  9
+             [1, 1, 1, 1, 1, 1, 1, 1, 1],
+             [1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 0, 0, 0, 0, 0, 0, 0, 1],
+             [1, 1, 1, 1, 1, 1, 1, 1, 1], //right
+
+
+            ], mapW = map.length, mapH = map[0].length;
+            
+      //Implements THREE PointerLockControls. 
+      var camera, scene, renderer;
+      var geometry, material, mesh;
+      var controls;
+      var objects = [];
+      var raycaster;
+      var blocker = document.getElementById( 'blocker' );
+      var instructions = document.getElementById( 'instructions' );
+
+      // http://www.html5rocks.com/en/tutorials/pointerlock/intro/
+      var havePointerLock = 'pointerLockElement' in document || 'mozPointerLockElement' in document || 'webkitPointerLockElement' in document;
+      if ( havePointerLock ) {
+        var element = document.body;
+        var pointerlockchange = function ( event ) {
+          if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
+            controlsEnabled = true;
+            controls.enabled = true;
+            blocker.style.display = 'none';
+          } else {
+            controls.enabled = false;
+            blocker.style.display = '-webkit-box';
+            blocker.style.display = '-moz-box';
+            blocker.style.display = 'box';
+            instructions.style.display = '';
+          }
+        };
+        var pointerlockerror = function ( event ) {
+          instructions.style.display = '';
+        };
+        // Hook pointer lock state change events
+        document.addEventListener( 'pointerlockchange', pointerlockchange, false );
+        document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
+        document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
+        document.addEventListener( 'pointerlockerror', pointerlockerror, false );
+        document.addEventListener( 'mozpointerlockerror', pointerlockerror, false );
+        document.addEventListener( 'webkitpointerlockerror', pointerlockerror, false );
+        instructions.addEventListener( 'click', function ( event ) {
+          instructions.style.display = 'none';
+          // Ask the browser to lock the pointer
+          element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+          if ( /Firefox/i.test( navigator.userAgent ) ) {
+            var fullscreenchange = function ( event ) {
+              if ( document.fullscreenElement === element || document.mozFullscreenElement === element || document.mozFullScreenElement === element ) {
+                document.removeEventListener( 'fullscreenchange', fullscreenchange );
+                document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+                element.requestPointerLock();
+              }
+            };
+            document.addEventListener( 'fullscreenchange', fullscreenchange, false );
+            document.addEventListener( 'mozfullscreenchange', fullscreenchange, false );
+            element.requestFullscreen = element.requestFullscreen || element.mozRequestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen;
+            element.requestFullscreen();
+          } else {
+            element.requestPointerLock();
+          }
+        }, false );
+      } else {
+        instructions.innerHTML = 'Your browser doesn\'t seem to support Pointer Lock API';
+      }
+
+      init();
+      animate();
+
+      var controlsEnabled = false;
+      var moveForward = false;
+      var moveBackward = false;
+      var moveLeft = false;
+      var moveRight = false;
+      var canJump = false;
+      var prevTime = performance.now();
+      var velocity = new THREE.Vector3();
+      var collision = false; 
+
+      function init() {
+        camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
+        scene = new THREE.Scene();
+        scene.fog = new THREE.Fog( 0xffffff, 0, 750 );
+        var light = new THREE.HemisphereLight( 0xeeeeff, 0x777788, 0.75 );
+        light.position.set( 0.5, 1, 0.75 );
+        scene.add( light );
+        controls = new THREE.PointerLockControls( camera );
+        scene.add( controls.getObject() );
+
+        var onKeyDown = function ( event ) {
+
+          switch ( event.keyCode ) {
+            case 38: // up
+            case 87: // w
+              moveForward = true;
+              break;
+            case 37: // left
+            case 65: // a
+              moveLeft = true; break;
+            case 40: // down
+            case 83: // s
+              moveBackward = true;
+              break;
+            case 39: // right
+            case 68: // d
+              moveRight = true;
+              break;
+          }
+        };
+        var onKeyUp = function ( event ) {
+          switch( event.keyCode ) {
+            case 38: // up
+            case 87: // w
+              moveForward = false;
+              break;
+            case 37: // left
+            case 65: // a
+              moveLeft = false;
+              break;
+            case 40: // down
+            case 83: // s
+              moveBackward = false;
+              break;
+            case 39: // right
+            case 68: // d
+              moveRight = false;
+              break;
+          }
+        };
+        document.addEventListener( 'keydown', onKeyDown, false );
+        document.addEventListener( 'keyup', onKeyUp, false );
+
+        //Creates ray for collision detection. Sets origin of ray to position of camera. Part of the problem may be here. (SF)
+        raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(), camera);
+        
+        renderer = new THREE.WebGLRenderer();
+        renderer.setClearColor( 0xffffff );
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        document.body.appendChild( renderer.domElement );
+        //
+        window.addEventListener( 'resize', onWindowResize, false );
+
+        //Add skybox
+        var sides = ['image/sky_texture.jpg','image/sky_texture.jpg','image/sky_texture.jpg','image/sky_texture.jpg','image/sky_texture.jpg','image/sky_texture.jpg'];
+        var skyboxTexture = THREE.ImageUtils.loadTextureCube(sides);
+        var shader = THREE.ShaderLib['cube'];
+        shader.uniforms['tCube'].value = skyboxTexture;
+        var skyBoxMaterial = new THREE.ShaderMaterial( {
+        fragmentShader: shader.fragmentShader,
+        vertexShader: shader.vertexShader,
+        uniforms: shader.uniforms,
+        depthWrite: false,
+        side: THREE.BackSide
+        });
+
+        var skybox = new THREE.Mesh(new THREE.CubeGeometry(500, 500, 500),skyBoxMaterial);
+        skyBoxMaterial.needsUpdate = true;
+        scene.add(skybox);
+        var axis = new THREE.AxisHelper(10);
+        scene.add(axis);
+
+        //Grass plane creation. 
+          var planeGeometry = new THREE.PlaneGeometry(500, 500, 500);
+              //Load grass texture.
+        var texture = new THREE.TextureLoader().load( "image/grass.jpg" );
+              var material = new THREE.MeshBasicMaterial( {map: texture} );
+              var plane = new THREE.Mesh(planeGeometry,material);
+              //Rotate to orient plane
+        plane.rotation.x = -.5*Math.PI;
+              scene.add(plane);
+
+        var axisHelper = new THREE.AxisHelper(5);
+        scene.add(axisHelper);
+
+
+
+        //Adjust wall length dimensions to scale entire house
+        var LENGTH = 100, HEIGHT = 70;
+        var DEPTH = 0.5 * LENGTH;
+
+
+        //Wall shape to be used by front and back walls. Spans half of the length unit to that half of the wall can be paint color of kitchen and half is color of rec room. 
+        var cube = new THREE.BoxGeometry(0.5 * LENGTH, HEIGHT, 1, 1, 1, 1);
+
+        //Define external house siding material
+        var wallMaterial =
+                   new THREE.MeshLambertMaterial({map: THREE.ImageUtils.loadTexture('images/stone.jpg')});
+
+        //Wall color shared by kitchen and entrance way. Will also be on half of divider between kitchen and rec room. 
+        var insideWall = new THREE.MeshLambertMaterial({color: 0xFAEBD7});
+
+        //Create array to show siding on outside of walls, paint on inside
+        var materials = [wallMaterial, wallMaterial, wallMaterial, wallMaterial, insideWall, wallMaterial];
+        var material = new THREE.MeshFaceMaterial(materials);
+
+      //West side of front wall of house aka shares colour of kitchen. Will have doors and windows. 
+      var frontWallMesh1 = new THREE.Mesh(cube, material);
+      frontWallMesh1.position.z -= DEPTH;
+      frontWallMesh1.position.x -= (1/4) * LENGTH;
+      frontWallMesh1.rotation.y = Math.PI;
+      //scene.add(frontWallMesh1);
+
+      //West side back wall aka shares colour of kitchen. 
+      var backWallMesh1 = new THREE.Mesh(cube, material);
+      backWallMesh1.position.z -= DEPTH + ((2/3) * LENGTH);
+      backWallMesh1.position.x -= (1/4) * LENGTH;
+      scene.add(backWallMesh1);
+
+      //Color for bedroom, bathroom, rec room, shared by external walls of east side. 
+      var bedroomMaterial = new THREE.MeshLambertMaterial({color: 0xe6f7ff});
+
+      //Right external walls, outside will be external siding material and inside will be colour of bedroom etc. 
+      var external = [wallMaterial, wallMaterial, wallMaterial, wallMaterial, bedroomMaterial, wallMaterial];
+      var rightExternalWalls = new THREE.MeshFaceMaterial(external);
+
+      //East side internal walls. Will be solid colour on both sides. 
+      var internal = new THREE.MeshPhongMaterial({color: 0xe6f7ff})
+      
+      //East side front wall aka shares paint with rec room. Has window removed from it. 
+      var frontWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
+      
+      //Include this if not using window
+      frontWallMesh2.position.z -= DEPTH;
+      frontWallMesh2.position.x += (1/4) * LENGTH;
+      frontWallMesh2.rotation.y = Math.PI;
+      //scene.add(frontWallMesh2);
+
+      //Remove this if not doing window
+     /* var windowGeo = new THREE.CubeGeometry(0.3 * LENGTH, 0.1 * LENGTH, 1);
+      var windowMesh = new THREE.Mesh(windowGeo);
+      windowMesh.position.y += (1/4) * HEIGHT;
+
+      //Create BSP representation
+      var windowBSP = new ThreeBSP(windowMesh);
+      var wallBSP = new ThreeBSP(frontWallMesh2);
+
+      //Subtract window geometry and then convert back to THREE.Mesh
+      var result = wallBSP.subtract(windowBSP);
+      var finalWall = result.toMesh();
+
+      //Position wall without window
+      finalWall.side = THREE.DoubleSide;
+      finalWall.position.z -= DEPTH;
+      finalWall.position.x += (1/4) * LENGTH;
+      finalWall.rotation.y = Math.PI;
+      finalWall.material = rightExternalWalls;
+
+      scene.add(finalWall);*/
+
+
+
+      //Back wall east side aka shares colour of rec room.
+      var backWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
+      backWallMesh2.position.z -= DEPTH + ((2/3) * LENGTH);
+      backWallMesh2.position.x += (1/4) * LENGTH;
+      scene.add(backWallMesh2);
+
+        var cube = new THREE.BoxGeometry((2/3) * LENGTH, HEIGHT, 1, 1, 1, 1);
+
+        //West wall of kitchen/dining room 
+        var westWallMesh = new THREE.Mesh(cube, material);
+        westWallMesh.position.z -= (5/3) * DEPTH;
+        westWallMesh.position.x -= (1/2) * LENGTH;
+        westWallMesh.rotation.y = Math.PI / 2;
+        scene.add(westWallMesh);
+
+        //East wall shared by bathroom and rec room 
+        var eastWallMesh = new THREE.Mesh(cube, rightExternalWalls);
+        eastWallMesh.position.z -= (5/3) * DEPTH;
+        eastWallMesh.position.x += (1/2) * LENGTH;
+        eastWallMesh.rotation.y = Math.PI * 1.5;
+        scene.add(eastWallMesh);
+
+        //Wall dividing kitchen/dining room from bedroom and rec room 
+
+        var divider = [internal, insideWall, insideWall, insideWall, insideWall, insideWall];
+
+        //Regular code in case we choose to remove walkway between kitchen and rec room.
+        /*var dividerPaint = new THREE.MeshFaceMaterial(divider);
+        var midDividingWall = new THREE.Mesh(cube, dividerPaint);
+        midDividingWall.position.z -= (5/3) * DEPTH;
+        midDividingWall.rotation.y = Math.PI / 2;
+        scene.add(midDividingWall);*/
+
+
+        var dividerPaint = new THREE.MeshFaceMaterial(divider);
+
+
+        //Remove walkway from divider wall. Cube3 is removed from Cube2. Cube2 is then converted back to THREE.Mesh, final name is midDividingWall.
+        var cube2 = new THREE.BoxGeometry((2/3) * LENGTH, HEIGHT, 1, 1, 1, 1);
+        var cube3 = new THREE.BoxGeometry((1/10) * LENGTH, (3/4) * HEIGHT, 1);
+        var wallMesh = new THREE.Mesh(cube2, dividerPaint);
+        var wall = new ThreeBSP(wallMesh);
+
+        var sub = new THREE.Mesh(cube3);
+        sub.position.x -= 20;
+        var hole = new ThreeBSP(sub);
+        
+        var subtracted_bsp = wall.subtract(hole);
+        var midDividingWall = subtracted_bsp.toMesh();
+        midDividingWall.geometry.computeVertexNormals();
+        midDividingWall.material.side = THREE.DoubleSide;
+        midDividingWall.material = dividerPaint;
+        midDividingWall.rotation.y = Math.PI / 2;
+        scene.add(midDividingWall);
+
+        midDividingWall.position.z -= (5/3) * DEPTH;
+        midDividingWall.rotation.y = Math.PI / 2;
+        scene.add(midDividingWall);
+
+        //Wall dividing bedroom from rec room, wall is internal
+        var cube = new THREE.CubeGeometry((1/2) * LENGTH, HEIGHT, 1);
+        var bedroomDivider = new THREE.Mesh(cube, internal);
+        bedroomDivider.position.z -= (5/3) * DEPTH;
+        bedroomDivider.position.x += (1/4) * LENGTH;
+        //scene.add(bedroomDivider);
+
+        //Wall dividing bathroom from bedroom, wall is internal
+        var cube = new THREE.CubeGeometry((1/3) * LENGTH, HEIGHT, 1);
+        var bathroomDivider = new THREE.Mesh(cube, internal);
+        bathroomDivider.position.z -= 2 * DEPTH;
+        bathroomDivider.position.x += (1/3) * LENGTH; 
+        bathroomDivider.rotation.y = Math.PI / 2;
+        scene.add(bathroomDivider);
+
+        //Geometry for both kitchen floor, entrance floor, and rec room floor
+        var geometry = new THREE.CubeGeometry((1/3) * LENGTH, (1/2) * LENGTH, 1);
+
+        //Create kitchen floor
+        var texture = new THREE.TextureLoader().load('images/white_tile.jpg');
+        texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
+        texture.repeat.set(8,6);
+        var floorMaterial =
+                   new THREE.MeshLambertMaterial({map: texture});
+        var kitchenFloor = new THREE.Mesh(geometry, floorMaterial);
+        kitchenFloor.rotation.x = -.5*Math.PI;
+        kitchenFloor.rotation.z = Math.PI / 2;
+        kitchenFloor.position.z -= DEPTH + ((1/2) * LENGTH);
+        kitchenFloor.position.x -= (1/4) * LENGTH;
+        scene.add(kitchenFloor);
+
+        //Create entrance floor
+        var texture = new THREE.TextureLoader().load('images/entrance.jpg');
+        var entranceMaterial = new THREE.MeshLambertMaterial({map: texture});
+        var entranceFloor = new THREE.Mesh(geometry, entranceMaterial);
+        entranceFloor.rotation.x = -.5*Math.PI;
+        entranceFloor.rotation.z = Math.PI / 2;
+        entranceFloor.position.z -= DEPTH + ((1/6)* LENGTH);
+        entranceFloor.position.x -= (1/4) * LENGTH;
+        scene.add(entranceFloor);
+
+        //Create rec room floor
+        var texture = new THREE.TextureLoader().load('images/BeigeCarpet.jpg');
+        var recRoomMaterial = new THREE.MeshLambertMaterial({map: texture});
+        var recRoomFloor = new THREE.Mesh(geometry, recRoomMaterial);
+        recRoomFloor.rotation.x = -.5*Math.PI;
+        recRoomFloor.rotation.z = Math.PI / 2;
+        recRoomFloor.position.z -= DEPTH + ((1/6)* LENGTH);
+        recRoomFloor.position.x += (1/4) * LENGTH;
+        scene.add(recRoomFloor);
+
+        //Create bedroom floor
+        var geometry = new THREE.CubeGeometry((1/3) * LENGTH, (1/3) * LENGTH, 1);
+        var texture = new THREE.TextureLoader().load('images/Marble_tile.jpg');
+        var bedroomMaterial = new THREE.MeshLambertMaterial({map: texture});
+        var bedroomFloor = new THREE.Mesh(geometry, bedroomMaterial);
+        bedroomFloor.rotation.x = -.5*Math.PI;
+        bedroomFloor.rotation.z = Math.PI / 2;
+        bedroomFloor.position.z -= DEPTH + ((1/2)* LENGTH);
+        bedroomFloor.position.x += (1/6) * LENGTH;
+        scene.add(bedroomFloor);
+
+        //Create bathroom floor. Uses own geometry and new texture. 
+        var geometry = new THREE.CubeGeometry((1/3) * LENGTH, (1/6) * LENGTH, 1);
+        var texture = new THREE.TextureLoader().load('images/entrance.jpg');
+        var bathroomMaterial = new THREE.MeshLambertMaterial({map: texture});
+        var bathroomFloor = new THREE.Mesh(geometry, bathroomMaterial);
+
+        bathroomFloor.rotation.x = -.5*Math.PI;
+        bathroomFloor.rotation.z = Math.PI / 2;
+         bathroomFloor.position.z -= DEPTH + ((1/2)* LENGTH);
+        bathroomFloor.position.x += (5/12) * LENGTH;
+
+        scene.add(bathroomFloor);
+
+        //Add door to front of house. 
+        var doorGeometry = new THREE.CubeGeometry((1/8) * LENGTH, (0.42) * HEIGHT, 2);
+        var texture = new THREE.TextureLoader().load('images/doors.jpg');
+        var material = new THREE.MeshPhongMaterial({map: texture, opacity: 1});
+        var doorMesh = new THREE.Mesh(doorGeometry, material);
+
+        doorMesh.position.z -= DEPTH;
+        doorMesh.position.y += 10;
+        doorMesh.position.x -= (0.1) * LENGTH;
+
+        scene.add(doorMesh);
+
+        //Load lilacs for front door. Lilac 1 is to the left of the door, lilac 2 is to the right. 
+        var loader = new THREE.ColladaLoader();
+        loader.load('images/Lilac/model.dae', function (result) {
+          var lilac1 = result.scene;
+          //Create lilac2 from lilac1.
+          var lilac2 = lilac1.clone();
+
+          //Left of door
+          lilac1.position.z -= DEPTH;
+          lilac1.position.x -= (0.28) * LENGTH;
+          lilac1.scale.set(0.2, 0.2, 0.2);
+          scene.add(lilac1);
+
+          //Right of door
+          lilac2.position.z -= DEPTH;
+          lilac2.position.x -= (0.01) * LENGTH;
+          lilac2.scale.set(0.2, 0.2, 0.2);
+          scene.add(lilac2);
+        });
+
+        //Create geometry for roof. Originally has square base of 1 x 1 x 1 but is scaled to desired dimensions using a scaling matrix. 
+        var geometry = new THREE.Geometry();
+        geometry.vertices = [
+            new THREE.Vector3( 0, 0, 0 ),
+            new THREE.Vector3( 0, 1, 0 ),
+            new THREE.Vector3( 1, 1, 0 ),
+            new THREE.Vector3( 1, 0, 0 ),
+            new THREE.Vector3( 0.5, 0.5, 1 )
+        ];
+        geometry.faces = [
+            new THREE.Face3( 0, 1, 2 ),
+            new THREE.Face3( 0, 2, 3 ),
+            new THREE.Face3( 1, 0, 4 ),
+            new THREE.Face3( 2, 1, 4 ),
+            new THREE.Face3( 3, 2, 4 ),
+            new THREE.Face3( 0, 3, 4 )
+        ];   
+
+        //Set dimensions of roof - will be 2x3 length units. 
+        var transformation = new THREE.Matrix4().makeScale( LENGTH, ((2/3) * LENGTH), 0.75 * HEIGHT);
+        geometry.applyMatrix( transformation );
+
+        //Create final roof mesh and add to scene. 
+        var texture = new THREE.TextureLoader().load('images/roof.jpg');
+        var roofMaterial = new THREE.MeshPhongMaterial({map: texture});
+        var roofMesh = new THREE.Mesh(geometry, roofMaterial);
+
+        roofMesh.rotation.x += Math.PI * 1.5;
+        roofMesh.position.y += (1/2) * HEIGHT;
+        roofMesh.position.z -= DEPTH;
+        roofMesh.position.x -= (1/2) * LENGTH;
+
+        scene.add(roofMesh);
+        
+      }
+
+      function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+      }
+
+      function animate() {
+
+        /* controls.getObject().position gives the current position of the camera. As of right now, a collision is detected when the camera is directly facing the wall which is obviously wrong. (SF)*/
+
+        requestAnimationFrame( animate );
+
+        //Save old position to return to if collision occurs (SF)
+        var oldPos = controls.getObject().position;
+
+        if ( controlsEnabled ) {
+
+          raycaster.ray.origin.copy( controls.getObject().position );
+
+          /* objects is an array of meshes to check for intersections, intersections will contain the meshes the ray intersects. */
+          var intersections = raycaster.intersectObjects( objects );
+          var dir = controls.getDirection(new THREE.Vector3(0, 0, 0)).clone();
+          raycaster.ray.direction.copy(dir);
+
+          var time = performance.now();
+          var delta = ( time - prevTime ) / 1000;
+          velocity.x -= velocity.x * 10.0 * delta;
+          velocity.z -= velocity.z * 10.0 * delta;
+          velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
+
+          if ( moveForward ) velocity.z -= 400.0 * delta;
+          if ( moveBackward ) velocity.z += 400.0 * delta;
+          if ( moveLeft ) velocity.x -= 400.0 * delta;
+          if ( moveRight ) velocity.x += 400.0 * delta;
+
+          controls.getObject().translateX( velocity.x * delta );
+          controls.getObject().translateY( velocity.y * delta );
+          controls.getObject().translateZ( velocity.z * delta );
+
+          /*I'm not sure why this is necessary but whenever I remove it the thing crashes */
+          if ( controls.getObject().position.y < 10 ) {
+            velocity.y = 0;
+            controls.getObject().position.y = 10;
+            canJump = true;
+          }
+
+          //New move has intersected with mesh, return to spot before move. I wrote this, feel free to remove (ie. not part of PointerLockControls) (SF)
+          if (intersections.length > 0 && intersections[0].distance <= 215) {
+
+            console.log("COLLISION");
+            controls.getObject().position = oldPos;
 
           }
 
-         function onWindowResize() {
+          prevTime = time;
+        }
+        renderer.render( scene, camera );
+      }
 
-           camera.aspect = window.innerWidth / window.innerHeight;
-           camera.updateProjectionMatrix();
-
-           renderer.setSize(window.innerWidth, window.innerHeight);
-
-         }
-
-         function animate() {
-
-           requestAnimationFrame(animate);
-           renderer.render(scene, camera);
-
-         }
-
-
-        };
-
-        </script>
-    </head>
-    <body></body>
-    </html>
-
-
+    </script>
+  </body>
+</html>
