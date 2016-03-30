@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset=utf-8>
+		<title>Maze</title>
+	</head>
+	<body>
+		<script src="http://threejs.org/build/three.js"></script>
+		<script>
+			function init() { 
+				var renderer = new THREE.WebGLRenderer({antialias: true }); // set antialias as true
+				renderer.setSize(800, 600); // Scene size (Width, Height)
+				renderer.setClearColor( 0xdddddd );
+				document.body.appendChild(renderer.domElement);
+				// define the scene
+				var scene = new THREE.Scene();
+				scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
+				//define the camera
+				var camera = new THREE.PerspectiveCamera(
+						45,             // Field of view
+						800 / 600,      // Aspect ratio
+						0.1,            // Near plane
+						500           // Far plane
+				);
+				camera.position.x= 0;  //default value anyway
+				camera.position.y= 10;  //default value anyway
+				camera.position.z = 20;  //We move the camera backwards to see all the scene
+				camera.lookAt(scene.position);
+				
+				var spLight = new THREE.PointLight(0xffffff, 1.75, 1000);
+				spLight.position.set(-100, 200, 200);
+				scene.add(spLight);
+				//plane object
+				var group = new THREE.Object3D();
+				var loader = new THREE.JSONLoader();
+				loader.load('grass.js', function(geometry,materials) {
+					var material = new THREE.MultiMaterial( materials );
+					mesh = new THREE.Mesh( geometry, material );
+					group.add(mesh);
+					scene.add( group );
+				});
+				// Render the scene:
+				var render = function () {
+					requestAnimationFrame(render); //this will update scene frames.
+					renderer.render(scene, camera); //renders the whole scene, updating it recursively.
+				};
+				render();
+			};
+			init();
+		</script>
+	</body>
+</html>
