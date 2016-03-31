@@ -538,7 +538,7 @@
         scene.add(doorMesh);
 
         //Load lilacs for front door. Lilac 1 is to the left of the door, lilac 2 is to the right. 
-        var loader = new THREE.ColladaLoader();
+        /*var loader = new THREE.ColladaLoader();
         loader.load('images/Lilac/model.dae', function (result) {
           var lilac1 = result.scene;
           //Create lilac2 from lilac1.
@@ -555,7 +555,7 @@
           lilac2.position.x -= (0.01) * LENGTH;
           lilac2.scale.set(0.2, 0.2, 0.2);
           scene.add(lilac2);
-        });
+        });*/
 
         //Create geometry for roof. Originally has square base of 1 x 1 x 1 but is scaled to desired dimensions using a scaling matrix. 
         var geometry = new THREE.Geometry();
