@@ -59,7 +59,7 @@
       <div id="instructions">
         <span style="font-size:40px">Click to play</span>
         <br />
-        (W, A, S, D = Move, MOUSE = Look around)
+        (W, A, S, D = Move, MOUSE = Look around, ENTER = Change view)
       </div>
 
     </div>
@@ -131,18 +131,6 @@
   }();
 
 };
-      var map = [//0  1  2  3  4  5  6  7  8  9
-             [1, 1, 1, 1, 1, 1, 1, 1, 1],
-             [1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 0, 0, 0, 0, 0, 0, 0, 1],
-             [1, 1, 1, 1, 1, 1, 1, 1, 1], //right
-
-
-            ], mapW = map.length, mapH = map[0].length;
             
       //Implements THREE PointerLockControls. 
       var camera, scene, renderer;
@@ -215,7 +203,10 @@
       var canJump = false;
       var prevTime = performance.now();
       var velocity = new THREE.Vector3();
-      var collision = false; 
+      var collision = false;
+      var bedroomDivider, frontWallMesh1, frontWallMesh2, roofMesh, doorMesh;
+      var wallsUp = true;
+      var window1, window2, window3, stainedGlassMesh;
 
       function init() {
         camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 500 );
@@ -230,6 +221,10 @@
         var onKeyDown = function ( event ) {
 
           switch ( event.keyCode ) {
+            //Enter key, changes house viewing. 
+            case 13:
+              changeView();
+              break;
             case 38: // up
             case 87: // w
               moveForward = true;
@@ -267,6 +262,38 @@
               break;
           }
         };
+
+        //Removes or adds front of house for better viewing. Triggered by pressing enter key. 
+        function changeView() {
+
+          if (wallsUp) {
+            scene.remove(frontWallMesh1);
+            scene.remove(frontWallMesh2);
+            scene.remove(bedroomDivider);
+            scene.remove(doorMesh);
+            scene.remove(roofMesh);
+            scene.remove(window1, window2, window3, stainedGlassMesh);
+            scene.remove(outdoorLightMesh, outdoorLightMesh2);
+            scene.remove(lilac1, lilac2);
+            wallsUp = false;
+          }
+
+          else {
+            scene.add(frontWallMesh1);
+            scene.add(frontWallMesh2);
+            scene.add(bedroomDivider);
+            scene.add(doorMesh);
+            scene.add(roofMesh);
+            scene.add(window1, window2, window3, stainedGlassMesh);
+            scene.add(outdoorLightMesh, outdoorLightMesh2);
+            scene.add(lilac1, lilac2);
+            wallsUp = true;
+          }
+
+          //Update scene     
+          animate();
+        }
+
         document.addEventListener( 'keydown', onKeyDown, false );
         document.addEventListener( 'keyup', onKeyUp, false );
 
@@ -315,6 +342,7 @@
         scene.add(axisHelper);
 
 
+        //___________BEGIN CREATING HOUSE FEATURES _________
 
         //Adjust wall length dimensions to scale entire house
         var LENGTH = 100, HEIGHT = 70;
@@ -336,11 +364,11 @@
         var material = new THREE.MeshFaceMaterial(materials);
 
       //West side of front wall of house aka shares colour of kitchen. Will have doors and windows. 
-      var frontWallMesh1 = new THREE.Mesh(cube, material);
+      frontWallMesh1 = new THREE.Mesh(cube, material);
       frontWallMesh1.position.z -= DEPTH;
       frontWallMesh1.position.x -= (1/4) * LENGTH;
       frontWallMesh1.rotation.y = Math.PI;
-      //scene.add(frontWallMesh1);
+      scene.add(frontWallMesh1);
 
       //West side back wall aka shares colour of kitchen. 
       var backWallMesh1 = new THREE.Mesh(cube, material);
@@ -359,13 +387,13 @@
       var internal = new THREE.MeshPhongMaterial({color: 0xe6f7ff})
       
       //East side front wall aka shares paint with rec room. Has window removed from it. 
-      var frontWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
+      frontWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
       
       //Include this if not using window
       frontWallMesh2.position.z -= DEPTH;
       frontWallMesh2.position.x += (1/4) * LENGTH;
       frontWallMesh2.rotation.y = Math.PI;
-      //scene.add(frontWallMesh2);
+      scene.add(frontWallMesh2);
 
       //Remove this if not doing window
      /* var windowGeo = new THREE.CubeGeometry(0.3 * LENGTH, 0.1 * LENGTH, 1);
@@ -425,7 +453,8 @@
         scene.add(midDividingWall);*/
 
 
-        var dividerPaint = new THREE.MeshFaceMaterial(divider);
+        var dividerPaint = new THREE.MeshLambertMaterial(divider);
+        dividerPaint.side = THREE.DoubleSide;
 
 
         //Remove walkway from divider wall. Cube3 is removed from Cube2. Cube2 is then converted back to THREE.Mesh, final name is midDividingWall.
@@ -439,10 +468,13 @@
         var hole = new ThreeBSP(sub);
         
         var subtracted_bsp = wall.subtract(hole);
-        var midDividingWall = subtracted_bsp.toMesh();
+        midDividingWall = subtracted_bsp.toMesh(dividerPaint);
         midDividingWall.geometry.computeVertexNormals();
+        midDividingWall.geometry.computeFaceNormals();
+
         midDividingWall.material.side = THREE.DoubleSide;
-        midDividingWall.material = dividerPaint;
+        midDividingWall.material.shading = THREE.FlatShading;
+
         midDividingWall.rotation.y = Math.PI / 2;
         scene.add(midDividingWall);
 
@@ -469,7 +501,7 @@
         var geometry = new THREE.CubeGeometry((1/3) * LENGTH, (1/2) * LENGTH, 1);
 
         //Create kitchen floor
-        var texture = new THREE.TextureLoader().load('images/white_tile.jpg');
+        var texture = new THREE.TextureLoader().load('images/kitchen-tile.jpg');
         texture.wrapS = texture.wrapT = THREE.MirroredRepeatWrapping;
         texture.repeat.set(8,6);
         var floorMaterial =
@@ -514,7 +546,7 @@
 
         //Create bathroom floor. Uses own geometry and new texture. 
         var geometry = new THREE.CubeGeometry((1/3) * LENGTH, (1/6) * LENGTH, 1);
-        var texture = new THREE.TextureLoader().load('images/entrance.jpg');
+        var texture = new THREE.TextureLoader().load('images/blue-tile.jpg');
         var bathroomMaterial = new THREE.MeshLambertMaterial({map: texture});
         var bathroomFloor = new THREE.Mesh(geometry, bathroomMaterial);
 
@@ -529,7 +561,7 @@
         var doorGeometry = new THREE.CubeGeometry((1/8) * LENGTH, (0.42) * HEIGHT, 2);
         var texture = new THREE.TextureLoader().load('images/doors.jpg');
         var material = new THREE.MeshPhongMaterial({map: texture, opacity: 1});
-        var doorMesh = new THREE.Mesh(doorGeometry, material);
+        doorMesh = new THREE.Mesh(doorGeometry, material);
 
         doorMesh.position.z -= DEPTH;
         doorMesh.position.y += 10;
@@ -538,11 +570,11 @@
         scene.add(doorMesh);
 
         //Load lilacs for front door. Lilac 1 is to the left of the door, lilac 2 is to the right. 
-        /*var loader = new THREE.ColladaLoader();
+        var loader = new THREE.ColladaLoader();
         loader.load('images/Lilac/model.dae', function (result) {
-          var lilac1 = result.scene;
+          lilac1 = result.scene;
           //Create lilac2 from lilac1.
-          var lilac2 = lilac1.clone();
+          lilac2 = lilac1.clone();
 
           //Left of door
           lilac1.position.z -= DEPTH;
@@ -555,7 +587,92 @@
           lilac2.position.x -= (0.01) * LENGTH;
           lilac2.scale.set(0.2, 0.2, 0.2);
           scene.add(lilac2);
-        });*/
+        });
+  
+        //Create features for front windows.
+        var windowGeo = new THREE.CubeGeometry((1/8) * LENGTH, (0.2) * HEIGHT, 2);
+        var texture = new THREE.TextureLoader().load('images/frontwindow.jpeg');
+        var material = new THREE.MeshPhongMaterial({map: texture, opacity: 1});
+
+        //Window 1 to the left of front door
+        window1 = new THREE.Mesh(windowGeo, material);
+        window1.position.z -= DEPTH;
+        window1.position.y += (0.25 * HEIGHT);
+        window1.position.x -= (0.3) * LENGTH;
+        scene.add(window1);
+
+        //Window 2 is first window to the right of front door
+        window2 = new THREE.Mesh(windowGeo, material);
+        window2.position.z -= DEPTH; 
+        window2.position.y += 0.25 * HEIGHT;
+        window2.position.x += 0.1 * LENGTH;
+        scene.add(window2);
+
+        //Window 3 is second window to right of front door
+        window3 = new THREE.Mesh(windowGeo, material);
+        window3.position.z -= DEPTH; 
+        window3.position.y += 0.25 * HEIGHT;
+        window3.position.x += (0.1 * LENGTH) + 10;
+        scene.add(window3);
+
+        //Side window 1 is on left side of house, closer to front 
+        sideWindow1 = new THREE.Mesh(windowGeo, material);
+        sideWindow1.position.z -= (1.4) * DEPTH; 
+        sideWindow1.position.x -= (1/2) * LENGTH;
+        sideWindow1.position.y += (0.25) * HEIGHT;
+        sideWindow1.rotation.y = Math.PI / 2;
+        scene.add(sideWindow1);
+
+        //Side window 2 is also on left side of house, farther from front
+        sideWindow2 = new THREE.Mesh(windowGeo, material);
+        sideWindow2.position.z -= (1.65) * DEPTH; 
+        sideWindow2.position.x -= (0.5) * LENGTH;
+        sideWindow2.position.y += (0.25) * HEIGHT;
+        sideWindow2.rotation.y = Math.PI / 2;
+        scene.add(sideWindow2);
+
+        //Side window 3 is on east side of house, in rec room 
+        sideWindow3 = new THREE.Mesh(windowGeo, material);
+        sideWindow3.position.z -= (1.2) * DEPTH; 
+        sideWindow3.position.x += (0.5) * LENGTH;
+        sideWindow3.position.y += (0.25) * HEIGHT;
+        sideWindow3.rotation.y = Math.PI / 2;
+        scene.add(sideWindow3);
+
+        //Back kitchen window, farther west
+        backKitchenWindow = new THREE.Mesh(windowGeo, material);
+        backKitchenWindow.position.z -= DEPTH + ((2/3) * LENGTH); 
+        backKitchenWindow.position.y += 0.25 * HEIGHT;
+        backKitchenWindow.position.x -= 0.2 * LENGTH;
+        scene.add(backKitchenWindow); 
+
+        //Back of kitchen, farther east
+        backKitchenWindow2 = new THREE.Mesh(windowGeo, material);
+        backKitchenWindow2.position.z -= DEPTH + ((2/3) * LENGTH); 
+        backKitchenWindow2.position.y += 0.25 * HEIGHT;
+        backKitchenWindow2.position.x -= 0.3 * LENGTH;
+        scene.add(backKitchenWindow2); 
+
+        bedroomWindow = new THREE.Mesh(windowGeo, material);
+        bedroomWindow.position.z -= DEPTH + ((2/3) * LENGTH); 
+        bedroomWindow.position.y += 0.25 * HEIGHT;
+        bedroomWindow.position.x += 0.15 * LENGTH;
+        scene.add(bedroomWindow); 
+  
+        //Create outdoor light geometry 
+        var geometry = new THREE.CubeGeometry(0.025 * LENGTH, 0.05 * HEIGHT, 1);
+        var texture = new THREE.TextureLoader().load('images/outdoor-light.png');
+        var material = new THREE.MeshPhongMaterial({map: texture});
+        outdoorLightMesh = new THREE.Mesh(geometry, material);
+        outdoorLightMesh.position.z -= DEPTH - 1;
+        outdoorLightMesh.position.y += 20;
+        scene.add(outdoorLightMesh);
+
+        outdoorLightMesh2 = new THREE.Mesh(geometry, material);
+        outdoorLightMesh2.position.z -= DEPTH - 1;
+        outdoorLightMesh2.position.y += 20;
+        outdoorLightMesh2.position.x -= 0.2 * LENGTH;
+        scene.add(outdoorLightMesh2);
 
         //Create geometry for roof. Originally has square base of 1 x 1 x 1 but is scaled to desired dimensions using a scaling matrix. 
         var geometry = new THREE.Geometry();
@@ -576,13 +693,13 @@
         ];   
 
         //Set dimensions of roof - will be 2x3 length units. 
-        var transformation = new THREE.Matrix4().makeScale( LENGTH, ((2/3) * LENGTH), 0.75 * HEIGHT);
+        var transformation = new THREE.Matrix4().makeScale( LENGTH, ((2/3) * LENGTH), 0.5 * HEIGHT);
         geometry.applyMatrix( transformation );
 
         //Create final roof mesh and add to scene. 
         var texture = new THREE.TextureLoader().load('images/roof.jpg');
         var roofMaterial = new THREE.MeshPhongMaterial({map: texture});
-        var roofMesh = new THREE.Mesh(geometry, roofMaterial);
+        roofMesh = new THREE.Mesh(geometry, roofMaterial);
 
         roofMesh.rotation.x += Math.PI * 1.5;
         roofMesh.position.y += (1/2) * HEIGHT;
@@ -653,5 +770,8 @@
       }
 
     </script>
+  </body>
+</html>
+
   </body>
 </html>
