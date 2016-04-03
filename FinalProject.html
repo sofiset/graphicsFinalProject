@@ -363,67 +363,67 @@
         var materials = [wallMaterial, wallMaterial, wallMaterial, wallMaterial, insideWall, wallMaterial];
         var material = new THREE.MeshFaceMaterial(materials);
 
-      //West side of front wall of house aka shares colour of kitchen. Will have doors and windows. 
-      frontWallMesh1 = new THREE.Mesh(cube, material);
-      frontWallMesh1.position.z -= DEPTH;
-      frontWallMesh1.position.x -= (1/4) * LENGTH;
-      frontWallMesh1.rotation.y = Math.PI;
-      scene.add(frontWallMesh1);
+		//West side of front wall of house aka shares colour of kitchen. Will have doors and windows. 
+		frontWallMesh1 = new THREE.Mesh(cube, material);
+		frontWallMesh1.position.z -= DEPTH;
+		frontWallMesh1.position.x -= (1/4) * LENGTH;
+		frontWallMesh1.rotation.y = Math.PI;
+		scene.add(frontWallMesh1);
 
-      //West side back wall aka shares colour of kitchen. 
-      var backWallMesh1 = new THREE.Mesh(cube, material);
-      backWallMesh1.position.z -= DEPTH + ((2/3) * LENGTH);
-      backWallMesh1.position.x -= (1/4) * LENGTH;
-      scene.add(backWallMesh1);
+		//West side back wall aka shares colour of kitchen. 
+		var backWallMesh1 = new THREE.Mesh(cube, material);
+		backWallMesh1.position.z -= DEPTH + ((2/3) * LENGTH);
+		backWallMesh1.position.x -= (1/4) * LENGTH;
+		scene.add(backWallMesh1);
 
-      //Color for bedroom, bathroom, rec room, shared by external walls of east side. 
-      var bedroomMaterial = new THREE.MeshLambertMaterial({color: 0xe6f7ff});
+		//Color for bedroom, bathroom, rec room, shared by external walls of east side. 
+		var bedroomMaterial = new THREE.MeshLambertMaterial({color: 0xe6f7ff});
 
-      //Right external walls, outside will be external siding material and inside will be colour of bedroom etc. 
-      var external = [wallMaterial, wallMaterial, wallMaterial, wallMaterial, bedroomMaterial, wallMaterial];
-      var rightExternalWalls = new THREE.MeshFaceMaterial(external);
+		//Right external walls, outside will be external siding material and inside will be colour of bedroom etc. 
+		var external = [wallMaterial, wallMaterial, wallMaterial, wallMaterial, bedroomMaterial, wallMaterial];
+		var rightExternalWalls = new THREE.MeshFaceMaterial(external);
 
-      //East side internal walls. Will be solid colour on both sides. 
-      var internal = new THREE.MeshPhongMaterial({color: 0xe6f7ff})
-      
-      //East side front wall aka shares paint with rec room. Has window removed from it. 
-      frontWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
-      
-      //Include this if not using window
-      frontWallMesh2.position.z -= DEPTH;
-      frontWallMesh2.position.x += (1/4) * LENGTH;
-      frontWallMesh2.rotation.y = Math.PI;
-      scene.add(frontWallMesh2);
+		//East side internal walls. Will be solid colour on both sides. 
+		var internal = new THREE.MeshPhongMaterial({color: 0xe6f7ff})
+	  
+		//East side front wall aka shares paint with rec room. Has window removed from it. 
+		frontWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
+	  
+		//Include this if not using window
+		frontWallMesh2.position.z -= DEPTH;
+		frontWallMesh2.position.x += (1/4) * LENGTH;
+		frontWallMesh2.rotation.y = Math.PI;
+		scene.add(frontWallMesh2);
 
-      //Remove this if not doing window
-     /* var windowGeo = new THREE.CubeGeometry(0.3 * LENGTH, 0.1 * LENGTH, 1);
-      var windowMesh = new THREE.Mesh(windowGeo);
-      windowMesh.position.y += (1/4) * HEIGHT;
+		//Remove this if not doing window
+		/* var windowGeo = new THREE.CubeGeometry(0.3 * LENGTH, 0.1 * LENGTH, 1);
+		var windowMesh = new THREE.Mesh(windowGeo);
+		windowMesh.position.y += (1/4) * HEIGHT;
 
-      //Create BSP representation
-      var windowBSP = new ThreeBSP(windowMesh);
-      var wallBSP = new ThreeBSP(frontWallMesh2);
+		//Create BSP representation
+		var windowBSP = new ThreeBSP(windowMesh);
+		var wallBSP = new ThreeBSP(frontWallMesh2);
 
-      //Subtract window geometry and then convert back to THREE.Mesh
-      var result = wallBSP.subtract(windowBSP);
-      var finalWall = result.toMesh();
+		//Subtract window geometry and then convert back to THREE.Mesh
+		var result = wallBSP.subtract(windowBSP);
+		var finalWall = result.toMesh();
 
-      //Position wall without window
-      finalWall.side = THREE.DoubleSide;
-      finalWall.position.z -= DEPTH;
-      finalWall.position.x += (1/4) * LENGTH;
-      finalWall.rotation.y = Math.PI;
-      finalWall.material = rightExternalWalls;
+		//Position wall without window
+		finalWall.side = THREE.DoubleSide;
+		finalWall.position.z -= DEPTH;
+		finalWall.position.x += (1/4) * LENGTH;
+		finalWall.rotation.y = Math.PI;
+		finalWall.material = rightExternalWalls;
 
-      scene.add(finalWall);*/
+		scene.add(finalWall);*/
 
 
 
-      //Back wall east side aka shares colour of rec room.
-      var backWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
-      backWallMesh2.position.z -= DEPTH + ((2/3) * LENGTH);
-      backWallMesh2.position.x += (1/4) * LENGTH;
-      scene.add(backWallMesh2);
+		//Back wall east side aka shares colour of rec room.
+		var backWallMesh2 = new THREE.Mesh(cube, rightExternalWalls);
+		backWallMesh2.position.z -= DEPTH + ((2/3) * LENGTH);
+		backWallMesh2.position.x += (1/4) * LENGTH;
+		scene.add(backWallMesh2);
 
         var cube = new THREE.BoxGeometry((2/3) * LENGTH, HEIGHT, 1, 1, 1, 1);
 
@@ -552,7 +552,7 @@
 
         bathroomFloor.rotation.x = -.5*Math.PI;
         bathroomFloor.rotation.z = Math.PI / 2;
-         bathroomFloor.position.z -= DEPTH + ((1/2)* LENGTH);
+        bathroomFloor.position.z -= DEPTH + ((1/2)* LENGTH);
         bathroomFloor.position.x += (5/12) * LENGTH;
 
         scene.add(bathroomFloor);
@@ -571,6 +571,17 @@
 
         //Load lilacs for front door. Lilac 1 is to the left of the door, lilac 2 is to the right. 
         var loader = new THREE.ColladaLoader();
+		// bathroom
+		loader.load("Bathroom.dae",function (result) {
+			var toilet = result.scene;
+			toilet.scale.set(0.5,0.5,0.5);
+            toilet.rotateX( - Math.PI / 2 );
+			toilet.position.x = 43;
+			toilet.position.y = 1;
+			toilet.position.z = -120;
+			scene.add(toilet);
+		});
+		
         loader.load('images/Lilac/model.dae', function (result) {
           lilac1 = result.scene;
           //Create lilac2 from lilac1.
