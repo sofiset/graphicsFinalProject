@@ -599,6 +599,89 @@
           lilac2.scale.set(0.2, 0.2, 0.2);
           scene.add(lilac2);
         });
+        
+        //Load fridge
+        loader.load('models/tableTest.dae', function (result) {
+              var table = result.scene;
+              table.position.z -= DEPTH + (0.2 * LENGTH);
+              table.position.x -= 0.07 * LENGTH;
+              table.rotation.x += Math.PI * 1.5;
+              //table.rotation.y += Math.PI * 0.5;
+              //table.rotation.z += Math.PI * 1.5;
+              table.scale.set(5, 5, 5);
+              table.position.x -= (0.20) * LENGTH;
+              scene.add(table);
+        });
+
+        //Load and position chairs
+        loader.load('models/chairTest.dae',function (result){
+               var chair1 = result.scene;
+               var chair2 = chair1.clone();
+               var chair3 = chair1.clone();
+               var chair4 = chair1.clone();
+
+               chair1.scale.set(4, 4, 4);
+               chair1.position.z -= DEPTH + (0.25 * LENGTH);
+               chair1.position.x -= 0.32 * LENGTH;
+               chair1.rotation.x += Math.PI * 1.5;
+
+               chair2.scale.set(4, 4, 4);
+               chair2.position.z -= DEPTH + (0.2 * LENGTH);
+               chair2.position.x -= 0.32 * LENGTH;
+               chair2.rotation.x += Math.PI * 1.5;
+
+               chair3.scale.set(4, 4, 4);
+               chair3.position.z -= DEPTH + (0.2 * LENGTH);
+               chair3.position.x -= 0.22 * LENGTH;
+               chair3.rotation.x += Math.PI * 1.5;
+               chair3.rotation.z += Math.PI;
+  
+               chair4.scale.set(4, 4, 4);
+               chair4.position.z -= DEPTH + (0.15 * LENGTH);
+               chair4.position.x -= 0.22 * LENGTH;
+               chair4.rotation.x += Math.PI * 1.5;
+               chair4.rotation.z += Math.PI;
+               
+               scene.add(chair1, chair2, chair3, chair4);
+
+        });
+      
+        //Load sink 
+        loader.load('models/stoveTest.dae',function (result){
+              var stove = result.scene;
+              stove.position.z -= DEPTH + (0.6 * LENGTH);
+              stove.position.x -= 0.25 * LENGTH;
+              //stove.rotation.x += Math.PI * 1.5;
+              //chair.rotation.y += Math.PI * 1.5;
+              stove.scale.set(6, 6, 6);
+              stove.position.x -= (0.1) * LENGTH;
+              //stove.rotation.z -= Math.PI / 2;
+              scene.add(stove);
+        });
+
+        loader.load('models/sinkTest.dae',function (result){
+              var sink = result.scene;
+              sink.position.z -= DEPTH + (0.6 * LENGTH);
+              sink.position.x -= 0.115 * LENGTH;
+              sink.rotation.x += Math.PI * 1.5;
+              sink.position.y += 0.075 * HEIGHT;
+              sink.scale.set(5, 5, 5);
+              sink.position.x -= (0.05) * LENGTH;
+              sink.rotation.z -= Math.PI / 2;
+              scene.add(sink);
+        });
+
+        //Add fridge
+        loader.load('models/fridgeTest.dae', function (result) {
+              var fridge = result.scene;
+              fridge.position.z -= DEPTH + (0.6 * LENGTH);
+              fridge.position.x -= 0.05 * LENGTH;
+              fridge.position.y += 0.075 * LENGTH;
+              fridge.rotation.x += Math.PI * 1.5;
+              fridge.rotation.z += Math.PI / 2;
+              fridge.scale.set(4, 4, 4);
+              scene.add(fridge);
+        });
   
         //Create features for front windows.
         var windowGeo = new THREE.CubeGeometry((1/8) * LENGTH, (0.2) * HEIGHT, 2);
