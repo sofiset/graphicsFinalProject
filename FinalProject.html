@@ -546,7 +546,7 @@
 
         //Create bathroom floor. Uses own geometry and new texture. 
         var geometry = new THREE.CubeGeometry((1/3) * LENGTH, (1/6) * LENGTH, 1);
-        var texture = new THREE.TextureLoader().load('images/blue-tile.jpg');
+        var texture = new THREE.TextureLoader().load('images/texture2.png');
         var bathroomMaterial = new THREE.MeshLambertMaterial({map: texture});
         var bathroomFloor = new THREE.Mesh(geometry, bathroomMaterial);
 
